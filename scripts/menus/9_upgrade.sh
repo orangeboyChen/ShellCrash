@@ -870,7 +870,11 @@ getdb() {
     line_break
     separator_line "="
     content_line "$UPG_DB_GETTING"
-    get_bin "$TMPDIR"/clashdb.tar.gz bin/dashboard/${db_type}.tar.gz
+    if [ "$db_type" = "zashboard" ]; then
+        webget "$TMPDIR"/clashdb.tar.gz "https://github.com/orangeboyChen/zashboard/releases/latest/download/zashboard.tar.gz"
+    else
+        get_bin "$TMPDIR"/clashdb.tar.gz bin/dashboard/${db_type}.tar.gz
+    fi
     if [ "$?" = "1" ]; then
         content_line "\033[31m$UPG_DOWNLOAD_FAIL\033[0m"
         error_down
