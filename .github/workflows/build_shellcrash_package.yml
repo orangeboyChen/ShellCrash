@@ -1,0 +1,106 @@
+name: Build ShellCrash Package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-shellcrash-package-dev
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: dev
+
+      - name: Build ShellCrash.tar.gz
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          package_dir=$(mktemp -d)
+          trap 'rm -rf "$package_dir"' EXIT
+
+          cp -a scripts/. "$package_dir/"
+          install -m 0644 \
+            public/fake_ip_filter.list \
+            public/servers.list \
+            public/servers_chs.list \
+            public/servers_en.list \
+            public/task_chs.list \
+            public/task_en.list \
+            version \
+            "$package_dir/"
+          install -m 0644 rules/clash_providers/clash_providers.list "$package_dir/clash_providers.list"
+          install -m 0644 rules/singbox_providers/singbox_providers.list "$package_dir/singbox_providers.list"
+
+          curl --connect-timeout 10 --retry 3 --retry-all-errors -fsSL \
+            https://raw.githubusercontent.com/ChanthMiao/China-IPv4-List/release/cn.txt \
+            -o "$package_dir/cn_ip.txt"
+          curl --connect-timeout 10 --retry 3 --retry-all-errors -fsSL \
+            https://raw.githubusercontent.com/ChanthMiao/China-IPv6-List/release/cn6.txt \
+            -o "$package_dir/cn_ipv6.txt"
+
+          (
+            cd "$package_dir"
+            tar \
+              --sort=name \
+              --mtime='UTC 1970-01-01' \
+              --owner=0 \
+              --group=0 \
+              --numeric-owner \
+              -I 'gzip -n' \
+              -cf "$GITHUB_WORKSPACE/ShellCrash.tar.gz" \
+              *
+          )
+
+      - name: Verify package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          package_manifest=$(mktemp)
+          trap 'rm -f "$package_manifest"' EXIT
+          tar -tzf ShellCrash.tar.gz | tee "$package_manifest" >/dev/null
+          tar -xOzf ShellCrash.tar.gz menus/9_upgrade.sh | cmp - scripts/menus/9_upgrade.sh
+
+          for required_file in \
+            init.sh \
+            menus/9_upgrade.sh \
+            fake_ip_filter.list \
+            servers_chs.list \
+            servers_en.list \
+            clash_providers.list \
+            singbox_providers.list \
+            task_chs.list \
+            task_en.list \
+            cn_ip.txt \
+            cn_ipv6.txt \
+            version; do
+            grep -Fxq "$required_file" "$package_manifest"
+          done
+
+      - name: Commit package to dev
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add ShellCrash.tar.gz
+
+          if git diff --cached --quiet; then
+            echo 'ShellCrash.tar.gz is already up to date.'
+            exit 0
+          fi
+
+          git commit -m 'chore(package): rebuild ShellCrash.tar.gz'
+          git push origin HEAD:dev
