@@ -351,7 +351,7 @@ case "$1" in
     separator_line "-"
     content_line "$MENU_HELP_ONLINE\033[36mhttps://t.me/ShellClash\033[0m"
     content_line "$MENU_HELP_BLOG\033[36mhttps://juewuy.github.io\033[0m"
-    content_line "$MENU_HELP_GITHUB\033[36mhttps://github.com/juewuy/ShellCrash\033[0m"
+    content_line "$MENU_HELP_GITHUB\033[36mhttps://github.com/orangeboyChen/ShellCrash\033[0m"
     separator_line "="
     line_break
     ;;

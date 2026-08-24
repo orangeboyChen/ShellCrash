@@ -4,11 +4,11 @@ webget(){
     if pidof CrashCore >/dev/null; then
         setproxy #设置临时代理，【$1】代表下载目录，【$2】代表在线地址
         url=$(printf '%s\n' "$2" |
-        sed -e 's#https://.*jsdelivr.net/gh/juewuy/ShellCrash[@|/]#https://raw.githubusercontent.com/juewuy/ShellCrash/#' \
-            -e 's#https://gh.jwsc.eu.org/#https://raw.githubusercontent.com/juewuy/ShellCrash/#')
+        sed -e 's#https://.*jsdelivr.net/gh/orangeboyChen/ShellCrash[@|/]#https://raw.githubusercontent.com/orangeboyChen/ShellCrash/#' \
+            -e 's#https://gh.jwsc.eu.org/#https://raw.githubusercontent.com/orangeboyChen/ShellCrash/#')
     else
         url=$(printf '%s\n' "$2" |
-        sed 's#https://raw.githubusercontent.com/juewuy/ShellCrash/#https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@#')
+        sed 's#https://raw.githubusercontent.com/orangeboyChen/ShellCrash/#https://testingcf.jsdelivr.net/gh/orangeboyChen/ShellCrash@#')
     fi
     # ===============================================
 

@@ -989,7 +989,7 @@ setdb() {
             ;;
         2)
             db_type=meta_xd
-            setconfig external_ui_url "https://raw.githubusercontent.com/juewuy/ShellCrash/update/bin/dashboard/meta_xd.tar.gz"
+            setconfig external_ui_url "https://raw.githubusercontent.com/orangeboyChen/ShellCrash/update/bin/dashboard/meta_xd.tar.gz"
             dbdir
             ;;
         3)
@@ -1234,7 +1234,7 @@ setserver() {
                 separator_line "="
                 content_line "\033[32m$UPG_SOURCE_VER_GETTING\033[0m"
                 . "$CRASHDIR"/libs/web_get_lite.sh
-                list=$(web_get_lite https://api.github.com/repos/juewuy/ShellCrash/tags | grep -E '"name": "[0-9]' | cut -d '"' -f4)
+                list=$(web_get_lite https://api.github.com/repos/orangeboyChen/ShellCrash/tags | grep -E '"name": "[0-9]' | cut -d '"' -f4)
                 if [ "$?" = "0" ]; then
                     content_line "\033[32m$UPG_SOURCE_VER_OK\033[0m"
                     separator_line "="
