@@ -38,7 +38,7 @@ send_help(){
 $BOT_TG_HELP_GROUP
 https://t.me/+6AElkMDzwPxmMmM1
 $BOT_TG_HELP_PROJECT
-https://github.com/juewuy/ShellClash
+https://github.com/orangeboyChen/ShellCrash
 $BOT_TG_HELP_GUIDE
 https://juewuy.github.io
 $BOT_TG_HELP_COFFEE
@@ -326,4 +326,3 @@ polling(){
 [ "$TG_menupush" = ON ] && send_menu
 
 polling
-

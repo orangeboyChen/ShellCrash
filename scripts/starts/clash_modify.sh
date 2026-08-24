@@ -206,7 +206,7 @@ merger_yaml() {
     [ "$dns_mod" = "mix" ] || [ "$dns_mod" = "route" ] && ! grep -Eq '^[[:space:]]*cn:' "$TMPDIR"/rule-providers.yaml && ! grep -q '^rule-providers' "$CRASHDIR"/yamls/others.yaml 2>/dev/null && {
         space=$(sed -n "1p" "$TMPDIR"/rule-providers.yaml | grep -oE '^ *') #获取空格数
         [ -z "$space" ] && space='  '
-        echo "${space}cn: {type: http, behavior: domain, format: mrs, path: ./ruleset/cn.mrs, interval: 86400, url: https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@update/bin/geodata/mrs_geosite_cn.mrs}" >>"$TMPDIR"/rule-providers.yaml
+        echo "${space}cn: {type: http, behavior: domain, format: mrs, path: ./ruleset/cn.mrs, interval: 86400, url: https://testingcf.jsdelivr.net/gh/orangeboyChen/ShellCrash@update/bin/geodata/mrs_geosite_cn.mrs}" >>"$TMPDIR"/rule-providers.yaml
     }
     #对齐rules中的空格
     sed -i 's/^ *-/ -/g' "$TMPDIR"/rules.yaml
