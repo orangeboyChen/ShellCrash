@@ -327,12 +327,18 @@ getcore() {
 }
 
 checkcustcore() {
-    [ "$api_tag" = "latest" ] && api_url=latest || api_url="tags/$api_tag"
+    if [ "$api_tag" = "latest" ]; then
+        api_url="https://api.github.com/repos/${project}/releases/latest"
+    elif [ "$api_tag" = "prerelease" ]; then
+        api_url="https://api.github.com/repos/${project}/releases?per_page=1"
+    else
+        api_url="https://api.github.com/repos/${project}/releases/tags/${api_tag}"
+    fi
     # 通过githubapi获取内核信息
     line_break
     separator_line "="
     content_line "\033[32m$UPG_CORE_GET_LINK_TITLE\033[0m"
-    webget "$TMPDIR"/github_api https://api.github.com/repos/"${project}"/releases/"${api_url}"
+    webget "$TMPDIR"/github_api "$api_url"
     if [ "$?" = 0 ]; then
         release_tag=$(cat "$TMPDIR"/github_api | grep '"tag_name":' | awk -F '"' '{print $4}')
         release_date=$(cat "$TMPDIR"/github_api | grep '"published_at":' | awk -F '"' '{print $4}')
@@ -409,6 +415,7 @@ setcustcore() {
             "3) \033[36mSagerNet/sing-box\033[32m@release\033[0m$UPG_CUSTOM_CORE_MENU_OFFICIAL" \
             "4) \033[36mDustinWin/mihomo\033[0m$UPG_CUSTOM_CORE_MENU_MULTI" \
             "5) \033[36mDustinWin/sing-boxr\033[0m$UPG_CUSTOM_CORE_MENU_MULTI" \
+            "6) \033[36morangeboyChen/sing-box-reF1nd\033[32m@prerelease\033[0m$UPG_CUSTOM_CORE_MENU_MULTI" \
             "9) $UPG_CUSTOM_CORE_LINK_MENU" \
             "" \
             "0) $COMMON_BACK"
@@ -448,9 +455,9 @@ setcustcore() {
             checkcustcore
             ;;
         6)
-            project=vernesong/mihomo-oix
-            api_tag=Pre-Alpha
-            crashcore=meta
+            project=orangeboyChen/sing-box-reF1nd
+            api_tag=prerelease
+            crashcore=singboxr
             checkcustcore
             ;;
         9)
