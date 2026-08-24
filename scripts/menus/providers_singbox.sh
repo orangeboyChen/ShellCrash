@@ -125,7 +125,7 @@ EOF
         "timeout": "3s"
       },
 	  "override_dialer": {
-        "domain_resolver": "$dns_proxy_server"
+        "domain_resolver": "dns_proxy_server"
 	  },
       "override_tls": {
         "enabled": true,
