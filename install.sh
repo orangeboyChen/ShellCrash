@@ -5,6 +5,7 @@ echo "***********************************************"
 echo "**                 欢迎使用                  **"
 echo "**                ShellCrash                 **"
 echo "**                             by  Juewuy    **"
+echo "**                         orangeboyChen-fork**"
 echo "***********************************************"
 
 language=chs
