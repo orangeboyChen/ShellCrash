@@ -32,6 +32,50 @@ check_update(){ #检查更新工具
     rm -rf "$TMPDIR"/crashversion
 }
 update_core(){ #自动更新内核
+    if [ -n "$1" ]; then
+        case "$1" in
+            auto|release|alpha) core_upgrade_channel="$1" ;;
+            *) task_logger "$TASK_CMD_CORE_DL_FAIL"; return 1 ;;
+        esac
+        core_upgrade_lock="$TMPDIR/core_upgrade.lock"
+        if ! mkdir "$core_upgrade_lock" 2>/dev/null; then
+            if [ -f "$core_upgrade_lock/pid" ] && ! kill -0 "$(cat "$core_upgrade_lock/pid")" 2>/dev/null; then
+                rm -rf "$core_upgrade_lock"
+                mkdir "$core_upgrade_lock" 2>/dev/null || return 1
+            else
+                return 1
+            fi
+        fi
+        echo $$ > "$core_upgrade_lock/pid"
+        export core_upgrade_channel
+        . "$CRASHDIR"/libs/core_tools.sh && core_webget
+        core_result=$?
+        unset core_upgrade_channel
+        rm -f "$core_upgrade_lock/pid"
+        rmdir "$core_upgrade_lock" 2>/dev/null
+        case "$core_result" in
+        0)
+            task_logger "$TASK_CMD_CORE_DONE"
+            killall CrashCore 2>/dev/null
+            core_restart_wait=0
+            while [ -n "$(pidof CrashCore)" ] && [ "$core_restart_wait" -lt 10 ]; do
+                sleep 1
+                core_restart_wait=$((core_restart_wait + 1))
+            done
+            "$CRASHDIR"/start.sh start
+            return 0
+        ;;
+        1)
+            task_logger "$TASK_CMD_CORE_DL_FAIL"
+            return 1
+        ;;
+        *)
+            task_logger "$TASK_CMD_CORE_VERIFY_FAIL"
+            "$CRASHDIR"/start.sh start
+            return 1
+        ;;
+        esac
+    fi
     #检查版本
     check_update bin/version
     crash_v_new=$(eval echo \$${crashcore}_v)
@@ -148,6 +192,6 @@ case "$1" in
         task_logger "$TASK_CMD_EXEC_PREFIX$2$TASK_CMD_EXEC_MID$task_res"
     ;;
     *)
-        "$1"
+        "$@"
     ;;
 esac

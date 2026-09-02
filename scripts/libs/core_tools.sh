@@ -46,7 +46,7 @@ core_find(){
     fi
 }
 core_check(){
-    [ -n "$(pidof CrashCore)" ] && "$CRASHDIR"/start.sh stop #停止内核服务防止内存不足
+    [ "$core_upgrade_channel" = '' ] && [ -n "$(pidof CrashCore)" ] && "$CRASHDIR"/start.sh stop #停止内核服务防止内存不足
     core_unzip "$1" core_new
     sbcheck=$(echo "$crashcore" | grep 'singbox')
     v=''
@@ -85,9 +85,95 @@ core_check(){
         return 0
     fi
 }
+core_resolve_link(){
+    case "$crashcore" in
+        singboxr)
+            project='orangeboyChen/sing-box-reF1nd'
+            ;;
+        singbox)
+            project='SagerNet/sing-box'
+            ;;
+        meta|clashpre)
+            if [ "$core_upgrade_channel" = alpha ] || [ "$crashcore" = clashpre -a "$core_upgrade_channel" = auto ]; then
+                project='vernesong/mihomo'
+            else
+                project='MetaCubeX/mihomo'
+            fi
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    case "$core_upgrade_channel" in
+        release)
+            if [ "$crashcore" = singboxr ]; then
+                api_url="https://api.github.com/repos/${project}/releases?per_page=20"
+                release_filter='stable'
+            else
+                api_url="https://api.github.com/repos/${project}/releases/latest"
+                release_filter=''
+            fi
+            ;;
+        auto)
+            if [ "$crashcore" = singboxr ]; then
+                api_url="https://api.github.com/repos/${project}/releases?per_page=1"
+                release_filter='first'
+            else
+                api_url="https://api.github.com/repos/${project}/releases/latest"
+                release_filter=''
+            fi
+            ;;
+        alpha)
+            api_url="https://api.github.com/repos/${project}/releases?per_page=1"
+            release_filter='prerelease'
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    webget "$TMPDIR/github_core_api" "$api_url" echooff || return 1
+    if [ "$release_filter" = prerelease ]; then
+        grep -qE '"prerelease"[[:space:]]*:[[:space:]]*true' "$TMPDIR/github_core_api" || {
+            rm -f "$TMPDIR/github_core_api"
+            return 1
+        }
+        core_release=$(cat "$TMPDIR/github_core_api")
+    elif [ "$release_filter" = stable ]; then
+        grep -qE '"prerelease"[[:space:]]*:[[:space:]]*false' "$TMPDIR/github_core_api" || {
+            rm -f "$TMPDIR/github_core_api"
+            return 1
+        }
+        core_release=$(cat "$TMPDIR/github_core_api")
+    elif [ "$release_filter" = first ]; then
+        core_release=$(cat "$TMPDIR/github_core_api")
+    else
+        core_release=$(cat "$TMPDIR/github_core_api")
+    fi
+    core_link=$(printf '%s\n' "$core_release" | grep -oE 'https://[^" ]+linux-[^" ]+\.(tar\.gz|gz|upx)' |
+        grep "linux-${cpucore}" | head -n 1)
+    rm -f "$TMPDIR/github_core_api"
+    unset core_release release_filter
+    [ -n "$core_link" ] || return 1
+    custcorelink="$core_link"
+    case "$core_link" in
+        *.tar.gz) zip_type='tar.gz' ;;
+        *.upx) zip_type='upx' ;;
+        *) zip_type='gz' ;;
+    esac
+    return 0
+}
 core_webget(){
     . "$CRASHDIR"/libs/web_get_bin.sh
     . "$CRASHDIR"/libs/check_target.sh
+    if [ -n "$core_upgrade_channel" ]; then
+        [ -n "$cpucore" ] || {
+            . "$CRASHDIR"/libs/check_cpucore.sh
+            check_cpucore
+        }
+        core_saved_custcorelink="$custcorelink"
+        core_dynamic_link=1
+        core_resolve_link || return 1
+    fi
     if [ -z "$custcorelink" ];then
         [ -z "$zip_type" ] && zip_type='tar.gz'
         #若环境适合裸存(见store_raw_worth_it，按典型核心~45M估算)，避免下载upx，改取tar.gz的裸二进制
@@ -103,7 +189,16 @@ core_webget(){
     fi
     #校验内核
     if [ "$?" = 0 ];then
-        core_check "$TMPDIR/Coretmp.$zip_type"
+        if [ "$core_dynamic_link" = 1 ]; then
+            custcorelink="$core_saved_custcorelink"
+            core_check "$TMPDIR/Coretmp.$zip_type"
+            core_result=$?
+            custcorelink="$core_saved_custcorelink"
+            unset core_saved_custcorelink core_dynamic_link
+            return "$core_result"
+        else
+            core_check "$TMPDIR/Coretmp.$zip_type"
+        fi
     else
         rm -f "$TMPDIR/Coretmp.$zip_type"
         return 1
