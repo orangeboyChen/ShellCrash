@@ -8,7 +8,7 @@ echo "**                             by  Juewuy    **"
 echo "***********************************************"
 
 language=en
-[ -z "$url" ] && url="https://github.com/orangeboyChen/ShellCrash/releases/latest/download"
+url="https://github.com/orangeboyChen/ShellCrash/releases/latest/download"
 
 # Internal Tools
 cecho() {

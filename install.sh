@@ -9,7 +9,7 @@ echo "**                         orangeboyChen-fork**"
 echo "***********************************************"
 
 language=chs
-[ -z "$url" ] && url="https://github.com/orangeboyChen/ShellCrash/releases/latest/download"
+url="https://github.com/orangeboyChen/ShellCrash/releases/latest/download"
 
 # 内置工具
 cecho() {
