@@ -20,7 +20,7 @@ jobs:
       - name: Checkout dev
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           ref: dev
 
       - name: Update version metadata
@@ -35,10 +35,11 @@ jobs:
         run: |
           set -euo pipefail
           package_dir=$(mktemp -d)
+          package_manifest=$(mktemp)
           assets_dir="$GITHUB_WORKSPACE/release-assets"
           rm -rf "$assets_dir"
           mkdir -p "$assets_dir"
-          trap 'rm -rf "$package_dir"' EXIT
+          trap 'rm -rf "$package_dir"; rm -f "$package_manifest"' EXIT
 
           cp -a scripts/. "$package_dir/"
           install -m 0644 \
@@ -69,8 +70,9 @@ jobs:
           cp install.sh "$assets_dir/install.sh"
           cp install_en.sh "$assets_dir/install_en.sh"
 
-          tar -tzf ShellCrash.tar.gz | grep -Fxq 'init.sh'
-          tar -tzf ShellCrash.tar.gz | grep -Fxq 'menus/9_upgrade.sh'
+          tar -tzf ShellCrash.tar.gz > "$package_manifest"
+          grep -Fxq 'init.sh' "$package_manifest"
+          grep -Fxq 'menus/9_upgrade.sh' "$package_manifest"
           test -s "$assets_dir/ShellCrash.tar.gz"
           test -s "$assets_dir/install.sh"
           test -s "$assets_dir/install_en.sh"
