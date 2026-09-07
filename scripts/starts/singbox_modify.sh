@@ -359,7 +359,11 @@ EOF
 }
 
 gen_experimental() { #生成experimental.json
-    [ "$crashcore" = "singboxr" ] && urltest_unified_delay=',"urltest_unified_delay": true'
+    core_upgrade_script=''
+    if [ "$crashcore" = "singboxr" ]; then
+        urltest_unified_delay=',"urltest_unified_delay": true'
+        core_upgrade_script=',"core_upgrade_script": "'"$CRASHDIR"'/core_upgrade.sh"'
+    fi
     cat >"$TMPDIR"/jsons/experimental.json <<EOF
 {
   "experimental": {
@@ -368,7 +372,7 @@ gen_experimental() { #生成experimental.json
       "external_ui": "ui",
       "external_ui_download_url": "$external_ui_url",
       "secret": "$secret",
-      "default_mode": "Rule"
+      "default_mode": "Rule"$core_upgrade_script
     }$urltest_unified_delay
   }
 }
