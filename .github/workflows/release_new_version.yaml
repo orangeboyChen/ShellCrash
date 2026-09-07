@@ -23,6 +23,13 @@ jobs:
           fetch-depth: 0
           ref: dev
 
+      - name: Import generated binary assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin update --depth=1
+          git archive origin/update bin | tar -x
+
       - name: Update version metadata
         shell: bash
         run: |
@@ -80,6 +87,13 @@ jobs:
           test -s "$assets_dir/ShellCrash.tar.gz"
           test -s "$assets_dir/install.sh"
           test -s "$assets_dir/install_en.sh"
+          for required_asset in \
+            sc-bin-geodata-mrs.tar.gz \
+            sc-bin-geodata-srs.tar.gz \
+            sc-bin-dashboard-zashboard.tar.gz \
+            sc-bin-meta-clash-linux-amd64.tar.gz; do
+            test -s "$assets_dir/$required_asset"
+          done
           echo "ASSETS_DIR=$assets_dir" >> "$GITHUB_ENV"
 
       - name: Commit version metadata
