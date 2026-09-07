@@ -6,6 +6,7 @@ FROM alpine:latest AS builder
 ARG TARGETPLATFORM
 ARG TZ=Asia/Shanghai
 ARG S6_OVERLAY_V=v3.2.1.0
+ARG SHELLCRASH_VERSION=latest
 
 RUN apk add --no-cache curl tzdata
 
@@ -15,9 +16,23 @@ RUN ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime && \
 
 WORKDIR /build
 
-#安装脚本相关文件
-COPY ShellCrash.tar.gz /tmp/ShellCrash.tar.gz
+#从 GitHub Release 下载脚本相关文件
 RUN set -eux; \
+    if [ "$SHELLCRASH_VERSION" = latest ]; then \
+      release_url="https://github.com/orangeboyChen/ShellCrash/releases/latest/download/ShellCrash.tar.gz"; \
+    else \
+      release_url="https://github.com/orangeboyChen/ShellCrash/releases/download/v${SHELLCRASH_VERSION#v}/ShellCrash.tar.gz"; \
+    fi; \
+    downloaded=false; \
+    for proxy in https://gh-proxy.org/ https://v4.gh-proxy.org/ https://v6.gh-proxy.org/ https://cdn.gh-proxy.org/ https://axisnow.gh-proxy.org/; do \
+      retry=1; \
+      while [ "$retry" -le 3 ]; do \
+        rm -f /tmp/ShellCrash.tar.gz; \
+        if curl --connect-timeout 10 -fsSL "${proxy}${release_url}" -o /tmp/ShellCrash.tar.gz; then downloaded=true; break 2; fi; \
+        retry=$((retry + 1)); \
+      done; \
+    done; \
+    "$downloaded" && test -s /tmp/ShellCrash.tar.gz; \
     mkdir -p /tmp/SC_tmp; \
     tar -zxf /tmp/ShellCrash.tar.gz -C /tmp/SC_tmp; \
     export systype=container; \
@@ -80,4 +95,3 @@ ENV S6_CMD_WAIT_FOR_SERVICES=1
 ENV S6_STAGE2_HOOK=/etc/s6-overlay/scripts/sync-autostart
 
 ENTRYPOINT ["/init"]
-

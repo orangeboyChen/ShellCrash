@@ -298,23 +298,6 @@ install() {
     cecho "\033[33m输入\033[30;47m $my_alias \033[0;33m命令即可管理！！！\033[0m"
     echo "-----------------------------------------------"
 }
-setversion() {
-    echo "-----------------------------------------------"
-    cecho "\033[33m请选择想要安装的版本：\033[0m"
-    cecho " 1 \033[32m公测版(推荐)\033[0m"
-    cecho " 2 \033[36m稳定版\033[0m"
-    cecho " 3 \033[31m开发版\033[0m"
-    echo "-----------------------------------------------"
-    read -p "请输入相应数字 > " num
-    case "$num" in
-	1) release_type=master ;;
-    2) release_type=stable ;;
-    3) release_type=dev ;;
-    *) ;;
-    esac
-	url=$(echo "$url" | sed "s/master/$release_type/")
-}
-
 # 安装检查
 check_systype() {
 	[ -f "/etc/storage/started_script.sh" ] && {

@@ -168,7 +168,7 @@ fi
     setconfig dns_mod 'mix'
     setconfig firewall_area '1'
     setconfig firewall_mod 'nftables'
-    setconfig release_type 'master'
+    setconfig release_type ''
     setconfig start_old 'OFF'
     echo "$CRASHDIR/menu.sh" >> /etc/profile
     cat > /usr/bin/crash <<'EOF'

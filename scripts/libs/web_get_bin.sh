@@ -10,7 +10,7 @@ release_asset_name() {
 get_bin() { #下载 GitHub Release 资产
     asset_name=$(release_asset_name "$2")
     if echo "$release_type" | grep -qE '^[vV]?[0-9]'; then
-        release_tag=$(echo "$release_type" | sed 's/^v//')
+        release_tag=$(echo "$release_type" | sed 's/^[vV]//')
         bin_url="https://github.com/orangeboyChen/ShellCrash/releases/download/v${release_tag}/${asset_name}"
     else
         bin_url="https://github.com/orangeboyChen/ShellCrash/releases/latest/download/${asset_name}"
