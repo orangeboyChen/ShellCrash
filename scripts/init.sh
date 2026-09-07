@@ -99,9 +99,12 @@ grep -q 'firewall_mod' "$CRASHDIR/configs/ShellClash.cfg" 2>/dev/null || {
     nft add table inet shellcrash 2>/dev/null && firewall_mod=nftables
     setconfig firewall_mod $firewall_mod
 }
-#设置更新地址
-[ -n "$url" ] && setconfig update_url "$url"
-[ -n "$release_type" ] && setconfig release_type "$release_type"
+#迁移旧版分支下载配置；固定 Release 回滚版本继续保留
+setconfig update_url ''
+setconfig url_id ''
+case "$release_type" in
+master|stable|dev) setconfig release_type '' ;;
+esac
 #设置语言
 [ -n "$language" ] && echo "$language" > "$CRASHDIR/configs/i18n.cfg"
 #设置环境变量
@@ -165,7 +168,7 @@ fi
     setconfig dns_mod 'mix'
     setconfig firewall_area '1'
     setconfig firewall_mod 'nftables'
-    setconfig release_type 'master'
+    setconfig release_type ''
     setconfig start_old 'OFF'
     echo "$CRASHDIR/menu.sh" >> /etc/profile
     cat > /usr/bin/crash <<'EOF'

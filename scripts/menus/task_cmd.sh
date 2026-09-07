@@ -105,7 +105,7 @@ update_core(){ #自动更新内核
 update_scripts(){ #自动更新脚本
     #检查版本
     check_update version
-    if [ -z "$versionsh" -o "$versionsh" = "versionsh_l" ];then
+    if [ -z "$versionsh" -o "$versionsh" = "$versionsh_l" ];then
         task_logger "$TASK_CMD_SCRIPT_SKIP"
         return 0
     else

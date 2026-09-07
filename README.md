@@ -45,79 +45,35 @@ ShellCrash is designed to be compatible with the vast majority of network device
 ## :hammer_and_wrench: Installation Guide
 
 > [!TIP]
-> If you encounter connection failures or SSL-related issues, please try switching to an alternative installation mirror.
+> Installation and updates are retrieved from this repository's GitHub Releases. Five proxies are tried in order, with three attempts per proxy.
 
 ### Prerequisites
 1. Ensure the device has **SSH** enabled and **Root privileges** obtained (Linux systems with a GUI can use the terminal directly).
 2. Connect to the device using an SSH tool (such as PuTTY, JuiceSSH, or the system's built-in terminal).
 
-### :penguin: Standard Linux Device Installation
+### :penguin: Unified Release Installation
 
 > [!IMPORTANT]
-> Please perform the installation as the root user.
-
-> Install via wget (jsDelivr CDN source)
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@dev' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install_en.sh \
-  && bash /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-> Or install via curl (Author's private source)
+> Install as root. This command supports standard Linux systems, routers, and older `wget` versions.
 
 ```sh
-export url='https://gh.jwsc.eu.org/dev' && bash -c "$(curl -kfsSl $url/install_en.sh)" && . /etc/profile &> /dev/null
-```
-
-### :satellite: Router Device Installation
-
-**Installation via `curl`:**
-> GitHub Source (Recommended for overseas environments or environments with proxy access)
-```sh
-export url='https://raw.githubusercontent.com/juewuy/ShellCrash/dev' \
-  && sh -c "$(curl -kfsSl $url/install_en.sh)" \
-  && . /etc/profile &> /dev/null
-```
-
-> Or jsDelivr CDN source
-
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@dev' \
-  && sh -c "$(curl -kfsSl $url/install_en.sh)" \
-  && . /etc/profile &> /dev/null
-```
-
-> Or Author's private source
-```sh
-export url='https://gh.jwsc.eu.org/dev' && sh -c "$(curl -kfsSl $url/install_en.sh)" && . /etc/profile &> /dev/null
-```
-
-**Installation via `wget`:**
-> GitHub Source (Recommended for overseas environments or environments with proxy access)
-```sh
-export url='https://raw.githubusercontent.com/juewuy/ShellCrash/dev' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install_en.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-> Or jsDelivr CDN source
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@dev' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install_en.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-### :pager: Installation for Legacy Devices with Older `wget` Versions
-
-> Author's private HTTP beta source
-```sh
-export url='http://t.jwsc.eu.org' \
-  && wget -q -O /tmp/install.sh $url/install_en.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
+asset_url='https://github.com/orangeboyChen/ShellCrash/releases/latest/download/install_en.sh'
+download() {
+  if command -v wget >/dev/null 2>&1; then
+    wget -q --no-check-certificate -O /tmp/install.sh "$1"
+  elif command -v curl >/dev/null 2>&1; then
+    curl -kfsSL "$1" -o /tmp/install.sh
+  else
+    return 1
+  fi
+}
+for proxy in https://gh-proxy.org/ https://v4.gh-proxy.org/ https://v6.gh-proxy.org/ https://cdn.gh-proxy.org/ https://axisnow.gh-proxy.org/; do
+  for retry in 1 2 3; do
+    download "${proxy}${asset_url}" && break 2
+    rm -f /tmp/install.sh
+  done
+done
+[ -s /tmp/install.sh ] && sh /tmp/install.sh && . /etc/profile
 ```
 
 
@@ -126,11 +82,7 @@ export url='http://t.jwsc.eu.org' \
 ```sh
 # Install necessary dependencies
 apk add --no-cache wget openrc ca-certificates tzdata nftables iproute2 dcron
-# Execute installation command
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@dev' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install_en.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
+# Use the unified Release installation command above.
 ```
 
  ### :whale: Docker 

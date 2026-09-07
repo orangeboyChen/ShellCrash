@@ -9,7 +9,7 @@ echo "**                         orangeboyChen-fork**"
 echo "***********************************************"
 
 language=chs
-[ -z "$url" ] && url="https://testingcf.jsdelivr.net/gh/orangeboyChen/ShellCrash@master"
+url="https://github.com/orangeboyChen/ShellCrash/releases/latest/download"
 
 # 内置工具
 cecho() {
@@ -34,6 +34,7 @@ webget() {
         [ -z "$4" ] && redirect='-L' || redirect=''
         result=$(curl -w %{http_code} --connect-timeout 5 "$progress" "$redirect" -ko "$1" "$2")
         [ -n "$(echo $result | grep -e ^2)" ] && result="200"
+        [ "$7" = "single" ] && [ "$result" != "200" ] && return 1
     else
         if wget --version >/dev/null 2>&1; then
             [ "$3" = "echooff" ] && progress='-q' || progress='-q --show-progress'
@@ -45,11 +46,31 @@ webget() {
         [ "$3" = "echooff" ] && progress='-q'
         wget "$progress" "$redirect" "$certificate" "$timeout" -O "$1" "$2"
         [ $? -eq 0 ] && result="200"
+        [ "$7" = "single" ] && [ "$result" != "200" ] && return 1
     fi
+    return 0
 }
 error_down() {
     cecho "请参考 \033[32mhttps://github.com/orangeboyChen/ShellCrash/blob/master/README_CN.md"
     cecho "\033[33m使用其他安装源重新安装！\033[0m"
+}
+
+release_webget() {
+    for proxy in \
+        https://gh-proxy.org/ \
+        https://v4.gh-proxy.org/ \
+        https://v6.gh-proxy.org/ \
+        https://cdn.gh-proxy.org/ \
+        https://axisnow.gh-proxy.org/; do
+        retry=1
+        while [ "$retry" -le 3 ]; do
+            result=''
+            webget "$1" "${proxy}${2}" echooff '' '' '' single && return 0
+            rm -f "$1"
+            retry=$((retry + 1))
+        done
+    done
+    return 1
 }
 
 # 安装及初始化
@@ -92,8 +113,8 @@ set_alias() {
     done
 }
 gettar() {
-    webget /tmp/ShellCrash.tar.gz "$url/ShellCrash.tar.gz" >/dev/null 2>&1
-    if [ "$result" != "200" ]; then
+    release_webget /tmp/ShellCrash.tar.gz "$url/ShellCrash.tar.gz" >/dev/null 2>&1
+    if [ "$?" != "0" ]; then
         cecho "\033[33m文件下载失败！\033[0m"
         error_down
         exit 1
@@ -278,23 +299,6 @@ install() {
     cecho "\033[33m输入\033[30;47m $my_alias \033[0;33m命令即可管理！！！\033[0m"
     echo "-----------------------------------------------"
 }
-setversion() {
-    echo "-----------------------------------------------"
-    cecho "\033[33m请选择想要安装的版本：\033[0m"
-    cecho " 1 \033[32m公测版(推荐)\033[0m"
-    cecho " 2 \033[36m稳定版\033[0m"
-    cecho " 3 \033[31m开发版\033[0m"
-    echo "-----------------------------------------------"
-    read -p "请输入相应数字 > " num
-    case "$num" in
-	1) release_type=master ;;
-    2) release_type=stable ;;
-    3) release_type=dev ;;
-    *) ;;
-    esac
-	url=$(echo "$url" | sed "s/master/$release_type/")
-}
-
 # 安装检查
 check_systype() {
 	[ -f "/etc/storage/started_script.sh" ] && {
@@ -319,9 +323,8 @@ check_user() {
 	fi
 }
 check_version() {
-	echo "$url" | grep -q 'master' && setversion
-	webget /tmp/version "$url/version" echooff
-	[ "$result" = "200" ] && versionsh=$(cat /tmp/version)
+    release_webget /tmp/version "$url/version"
+    [ "$?" = "0" ] && versionsh=$(cat /tmp/version)
 	rm -rf /tmp/version
 
 	# 输出
