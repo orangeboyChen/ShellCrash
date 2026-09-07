@@ -71,7 +71,7 @@ jobs:
             relative=${path#./}
             asset_name="sc-${relative//\//-}"
             cp "$path" "$assets_dir/$asset_name"
-          done < <(find bin public rules -type f ! -name 'ShellCrash.tar.gz' | sort)
+          done < <(find bin public rules tools -type f ! -name 'ShellCrash.tar.gz' | sort)
 
           tar -tzf ShellCrash.tar.gz | grep -Fxq 'init.sh'
           tar -tzf ShellCrash.tar.gz | grep -Fxq 'menus/9_upgrade.sh'
