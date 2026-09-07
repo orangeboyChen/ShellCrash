@@ -45,83 +45,35 @@ ShellCrash 旨在兼容绝大多数基于 Linux 内核的网络设备：
 ## :hammer_and_wrench: 安装指南
 
 > [!TIP]
-> 若遇到连接失败或SSL相关问题，请尝试切换至其他安装镜像站。
+> 安装和更新均从本仓库 GitHub Release 获取，并依次尝试五个代理；每个代理失败三次后自动切换。
 
 ### 前置条件
 1. 确保设备已开启 **SSH** 并获得 **Root 权限**（带图形介面的 Linux 系统可直接使用终端）。
 2. 使用 SSH 工具（如 Putty、JuiceSSH、或系统自带终端）连接至设备。
 
-### :penguin: 标准 Linux 设备安装
+### :penguin: 统一 Release 安装
 
 > [!IMPORTANT]
-> 请以 root 用户进行安装。
-
-> 使用 wget 安装（jsDelivr CDN 源）
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install.sh \
-  && bash /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-> 或使用 curl 安装（作者私人源）
+> 请以 root 用户进行安装。此命令适用于标准 Linux、路由器和旧版 `wget` 设备。
 
 ```sh
-export url='https://gh.jwsc.eu.org/master' \
-  && bash -c "$(curl -kfsSl $url/install.sh)" \
-  && . /etc/profile &> /dev/null
-```
-
-### :satellite: 路由器设备安装
-
-**使用 `curl` 安装：**
-> GitHub 源（推荐海外环境或具备代理环境使用）
-```sh
-export url='https://raw.githubusercontent.com/juewuy/ShellCrash/master' \
-  && sh -c "$(curl -kfsSl $url/install.sh)" \
-  && . /etc/profile &> /dev/null
-```
-
-> 或 jsDelivr CDN 源
-
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master' \
-  && sh -c "$(curl -kfsSl $url/install.sh)" \
-  && . /etc/profile &> /dev/null
-```
-
-> 或作者私人源
-```sh
-export url='https://gh.jwsc.eu.org/master' \
-  && sh -c "$(curl -kfsSl $url/install.sh)" \
-  && . /etc/profile &> /dev/null
-```
-
-**使用 `wget` 安装：**
-> GitHub 源（推荐海外环境或具备代理环境使用）
-```sh
-export url='https://raw.githubusercontent.com/juewuy/ShellCrash/master' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-> 或 jsDelivr CDN 源
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-### :pager: 老旧设备使用低版本 `wget` 安装
-
-> 作者私人 http 内测源
-```sh
-export url='http://t.jwsc.eu.org' \
-  && wget -q -O /tmp/install.sh $url/install.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
+asset_url='https://github.com/orangeboyChen/ShellCrash/releases/latest/download/install.sh'
+download() {
+  if command -v wget >/dev/null 2>&1; then
+    wget -q --no-check-certificate -O /tmp/install.sh "$1"
+  elif command -v curl >/dev/null 2>&1; then
+    curl -kfsSL "$1" -o /tmp/install.sh
+  else
+    return 1
+  fi
+}
+for proxy in https://gh-proxy.org/ https://v4.gh-proxy.org/ https://v6.gh-proxy.org/ https://cdn.gh-proxy.org/ https://axisnow.gh-proxy.org/; do
+  for retry in 1 2 3; do
+    download "${proxy}${asset_url}" && break 2
+    rm -f /tmp/install.sh
+  done
+done
+[ -s /tmp/install.sh ] && sh /tmp/install.sh && . /etc/profile
 ```
 
 
@@ -131,11 +83,7 @@ export url='http://t.jwsc.eu.org' \
 # 安装必要依赖
 apk add --no-cache wget openrc ca-certificates tzdata nftables iproute2 dcron
 
-# 执行安装命令
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
+# 使用上方“统一 Release 安装”命令
 ```
 
  ### :whale: Docker 

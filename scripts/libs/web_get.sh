@@ -25,6 +25,7 @@ webget(){
             certificate='--no-check-certificate'
         fi
         wget -Y on $agent $progress $redirect $certificate --timeout=3 -O "$1" "$url" && return 0 #成功则退出否则重试
+        [ "$7" = "single" ] && return 1
         wget -Y off $agent $progress $redirect $certificate --timeout=5 -O "$1" "$2"
         return $?
     elif curl --version >/dev/null 2>&1; then
@@ -55,6 +56,7 @@ webget(){
         fi
 
         [ "$result" = "200" ] && return 0 #成功则退出否则重试
+        [ "$7" = "single" ] && return 1
         export https_proxy=""
         export http_proxy=""
         
@@ -68,6 +70,7 @@ webget(){
     elif ckcmd wget;then
         [ "$3" = "echooff" ] && progress='-q'
         wget -Y on $progress -O "$1" "$url" && return 0 #成功则退出否则重试
+        [ "$7" = "single" ] && return 1
         wget -Y off $progress -O "$1" "$2"
         return $?
     else
