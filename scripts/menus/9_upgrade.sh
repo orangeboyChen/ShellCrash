@@ -1124,15 +1124,63 @@ setcrt() {
 
 # 写入配置文件
 saveserver() {
-    setconfig update_url "'$update_url'"
-    setconfig url_id "$url_id"
+    setconfig update_url ''
+    setconfig url_id ''
     setconfig release_type "$release_type"
     version_new=''
     msg_alert -t 0 "\033[32m$UPG_SOURCE_SWITCH_OK\033[0m"
 }
 
-# 安装源
+# 单一 Release 发布源
 setserver() {
+    comp_box "\033[30;47mShellCrash Release\033[0m" \
+        "当前下载源：GitHub Release（通过 gh-proxy 自动切换）" \
+        "1) 使用 latest 最新版本" \
+        "2) 选择历史版本回滚" \
+        "0) 返回"
+    read -r -p "$COMMON_INPUT> " num
+    case "$num" in
+    1)
+        release_type=''
+        saveserver
+        ;;
+    2)
+        list=''
+        for proxy in \
+            https://gh-proxy.org/ \
+            https://v4.gh-proxy.org/ \
+            https://v6.gh-proxy.org/ \
+            https://cdn.gh-proxy.org/ \
+            https://axisnow.gh-proxy.org/; do
+            retry=1
+            while [ "$retry" -le 3 ] && [ -z "$list" ]; do
+                webget "$TMPDIR/tags" "${proxy}https://api.github.com/repos/orangeboyChen/ShellCrash/releases" echooff '' '' '' single
+                [ "$?" = 0 ] && list=$(grep -E '"tag_name": "v?[0-9]' "$TMPDIR/tags" | sed -E 's/.*"tag_name": "v?([^" ]+)".*/\1/')
+                rm -f "$TMPDIR/tags"
+                retry=$((retry + 1))
+            done
+            [ -n "$list" ] && break
+        done
+        [ -z "$list" ] && {
+            msg_alert "\033[31m无法获取 Release 列表\033[0m"
+            return 1
+        }
+        list_box "$list"
+        btm_box "0) $COMMON_BACK"
+        read -r -p "$COMMON_INPUT> " num
+        [ -n "$num" ] && [ "$num" != 0 ] && {
+            release_type=$(echo "$list" | sed -n "${num}p")
+            [ -n "$release_type" ] && saveserver
+        }
+        ;;
+    *)
+        checkupdate=false
+        ;;
+    esac
+}
+
+# 旧版安装源菜单（保留函数名以兼容历史配置）
+legacy_setserver() {
     while true; do
         line_break
         LISTFILE="$CRASHDIR"/configs/servers_"$i18n".list

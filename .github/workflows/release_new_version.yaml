@@ -1,74 +1,100 @@
-name: Release New Version
-on: 
+name: Release ShellCrash
+
+on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: 'new version of ShellClash, such as 1.7.0f'
+        description: 'Release version, for example 1.9.6'
         required: true
         type: string
-      release_type:
-        required: true
-        type: choice
-        options:
-          - '内测版'
-          - '公测版'
-          - '正式版'
-env:
-  new_version: ${{ github.event.inputs.release_version }}
-  new_type: ${{ github.event.inputs.release_type }}
+
+permissions:
+  contents: write
+
 jobs:
-  Update:
+  release:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: ${{ inputs.release_version }}
     steps:
-    - name: Clone Repository
-      uses: actions/checkout@main
-    - name: Update Version Number
-      if: ${{ github.event.inputs.release_type != '内测版' }}
-      run: |
-        if [[ "${new_type}" == "正式版" ]]; then
-          sed -i "1i ${new_version}" ./bin/release_version
-        elif [[ "${new_type}" == "公测版" ]]; then
-          sed -i "s/versionsh=.*/versionsh=${new_version}/" ./bin/version
-          sed -i "s/version=.*/version=${new_version}/" ./scripts/init.sh
-        fi
-    - name: Package
-      if: ${{ github.event.inputs.release_type != '正式版' }}
-      run: |
-        cd ./bin
-        # 打包 clashfm.tar.gz
-        rm ./clashfm.tar.gz
-        mkdir clashfm && pushd clashfm
-          cp ../../scripts/* ./
-          chmod +x *
-          tar zcvf ../clashfm.tar.gz *
-        popd && rm -fr clashfm
-        # 打包 ShellClash.tar.gz
-        rm ./ShellClash.tar.gz
-        mkdir ShellClash && pushd ShellClash
-          cp ../../scripts/* ./
-          chmod +x *
-          cp ../Country.mmdb ./
-          tar zcvf ../ShellClash.tar.gz *
-        popd && rm -fr ./ShellClash
-    - name: Commit and push
-      if: ${{ github.event.inputs.release_type != '内测版' }}
-      run: |
-        git config --global user.email "github-actions[bot]@users.noreply.github.com" && git config --global user.name "github-actions[bot]"
-        git add . && git commit -m "${new_type} ${new_version} 打包" || exit 0
-        git push
-        if [[ "${new_type}" == "正式版" ]]; then
-          git tag ${new_version}
-          git push origin ${new_version}
-        fi
-    - name: Package Artifact
-      id: package_artifact
-      run: |
-        mkdir artifacts
-        cp ./bin/clashfm.tar.gz ./artifacts/
-        cp ./bin/ShellClash.tar.gz ./artifacts/
-        echo "artifact_name=${new_type}_${new_version}_$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
-    - name: Upload Test Artifact
-      uses: actions/upload-artifact@main
-      with:
-        name: ${{ steps.package_artifact.outputs.artifact_name }}
-        path: ./artifacts/*
+      - name: Checkout dev
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: dev
+
+      - name: Update version metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]
+          printf '%s\n' "$RELEASE_VERSION" > version
+          sed -i "s/^versionsh=.*/versionsh=$RELEASE_VERSION/" bin/version
+
+      - name: Build release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_dir=$(mktemp -d)
+          assets_dir="$GITHUB_WORKSPACE/release-assets"
+          rm -rf "$assets_dir"
+          mkdir -p "$assets_dir"
+          trap 'rm -rf "$package_dir"' EXIT
+
+          cp -a scripts/. "$package_dir/"
+          install -m 0644 \
+            public/fake_ip_filter.list \
+            public/servers.list \
+            public/servers_chs.list \
+            public/servers_en.list \
+            public/task_chs.list \
+            public/task_en.list \
+            version \
+            "$package_dir/"
+          install -m 0644 rules/clash_providers/clash_providers.list "$package_dir/clash_providers.list"
+          install -m 0644 rules/singbox_providers/singbox_providers.list "$package_dir/singbox_providers.list"
+          curl --connect-timeout 10 --retry 3 --retry-all-errors -fsSL \
+            https://raw.githubusercontent.com/ChanthMiao/China-IPv4-List/release/cn.txt \
+            -o "$package_dir/cn_ip.txt"
+          curl --connect-timeout 10 --retry 3 --retry-all-errors -fsSL \
+            https://raw.githubusercontent.com/ChanthMiao/China-IPv6-List/release/cn6.txt \
+            -o "$package_dir/cn_ipv6.txt"
+          (
+            cd "$package_dir"
+            tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 \
+              --numeric-owner -I 'gzip -n' -cf "$GITHUB_WORKSPACE/ShellCrash.tar.gz" *
+          )
+
+          cp ShellCrash.tar.gz "$assets_dir/ShellCrash.tar.gz"
+          cp version "$assets_dir/version"
+          while IFS= read -r path; do
+            relative=${path#./}
+            asset_name="sc-${relative//\//-}"
+            cp "$path" "$assets_dir/$asset_name"
+          done < <(find bin public rules -type f ! -name 'ShellCrash.tar.gz' | sort)
+
+          tar -tzf ShellCrash.tar.gz | grep -Fxq 'init.sh'
+          tar -tzf ShellCrash.tar.gz | grep -Fxq 'menus/9_upgrade.sh'
+          test -s "$assets_dir/ShellCrash.tar.gz"
+          echo "ASSETS_DIR=$assets_dir" >> "$GITHUB_ENV"
+
+      - name: Commit version metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add version bin/version
+          git diff --cached --quiet || git commit -m "chore(release): v${RELEASE_VERSION}"
+          git push origin HEAD:dev
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "v${RELEASE_VERSION}" "$ASSETS_DIR"/* \
+            --target dev \
+            --title "ShellCrash v${RELEASE_VERSION}" \
+            --generate-notes
