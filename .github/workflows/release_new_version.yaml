@@ -23,13 +23,6 @@ jobs:
           fetch-depth: 0
           ref: dev
 
-      - name: Import generated binary assets
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch --no-tags origin update --depth=1
-          git archive origin/update bin | tar -x
-
       - name: Update version metadata
         shell: bash
         run: |
@@ -76,24 +69,12 @@ jobs:
           cp version "$assets_dir/version"
           cp install.sh "$assets_dir/install.sh"
           cp install_en.sh "$assets_dir/install_en.sh"
-          while IFS= read -r path; do
-            relative=${path#./}
-            asset_name="sc-${relative//\//-}"
-            cp "$path" "$assets_dir/$asset_name"
-          done < <(find bin public rules tools -type f ! -name 'ShellCrash.tar.gz' | sort)
 
           tar -tzf ShellCrash.tar.gz | grep -Fxq 'init.sh'
           tar -tzf ShellCrash.tar.gz | grep -Fxq 'menus/9_upgrade.sh'
           test -s "$assets_dir/ShellCrash.tar.gz"
           test -s "$assets_dir/install.sh"
           test -s "$assets_dir/install_en.sh"
-          for required_asset in \
-            sc-bin-geodata-mrs.tar.gz \
-            sc-bin-geodata-srs.tar.gz \
-            sc-bin-dashboard-zashboard.tar.gz \
-            sc-bin-meta-clash-linux-amd64.tar.gz; do
-            test -s "$assets_dir/$required_asset"
-          done
           echo "ASSETS_DIR=$assets_dir" >> "$GITHUB_ENV"
 
       - name: Commit version metadata

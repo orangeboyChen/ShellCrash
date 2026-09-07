@@ -1,20 +1,25 @@
 . "$CRASHDIR"/libs/web_get.sh
 
-release_asset_name() {
-    case "$1" in
-        ShellCrash.tar.gz|version) printf '%s' "$1" ;;
-        *) printf 'sc-%s' "$(printf '%s' "$1" | tr '/' '-')" ;;
+get_bin() { #下载项目文件；脚本包来自 Release，其余资源按原分支按需下载
+    case "$2" in
+        ShellCrash.tar.gz|version)
+            if echo "$release_type" | grep -qE '^[vV]?[0-9]'; then
+                release_tag=$(echo "$release_type" | sed 's/^[vV]//')
+                bin_url="https://github.com/orangeboyChen/ShellCrash/releases/download/v${release_tag}/$2"
+            else
+                bin_url="https://github.com/orangeboyChen/ShellCrash/releases/latest/download/$2"
+            fi
+            ;;
+        bin/*)
+            bin_url="https://github.com/orangeboyChen/ShellCrash/raw/update/$2"
+            ;;
+        public/*|rules/*|tools/*)
+            bin_url="https://github.com/orangeboyChen/ShellCrash/raw/dev/$2"
+            ;;
+        *)
+            return 1
+            ;;
     esac
-}
-
-get_bin() { #下载 GitHub Release 资产
-    asset_name=$(release_asset_name "$2")
-    if echo "$release_type" | grep -qE '^[vV]?[0-9]'; then
-        release_tag=$(echo "$release_type" | sed 's/^[vV]//')
-        bin_url="https://github.com/orangeboyChen/ShellCrash/releases/download/v${release_tag}/${asset_name}"
-    else
-        bin_url="https://github.com/orangeboyChen/ShellCrash/releases/latest/download/${asset_name}"
-    fi
 
     for proxy in \
         https://gh-proxy.org/ \
