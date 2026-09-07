@@ -39,7 +39,7 @@ RUN set -eux; \
     export CRASHDIR=/etc/ShellCrash; \
     /bin/sh /tmp/SC_tmp/init.sh
 	
-#获取 update 分支内核及 s6 文件
+#获取 bin 分支内核及 s6 文件
 RUN set -eux; \
 	case "$TARGETPLATFORM" in \
       linux/amd64)  K=amd64 S=x86_64;; \
@@ -48,7 +48,7 @@ RUN set -eux; \
       linux/386)    K=386 S=i486;; \
       *) echo "unsupported $TARGETPLATFORM" && exit 1 ;; \
     esac; \
-    source_base="https://github.com/orangeboyChen/ShellCrash/raw/update"; \
+    source_base="https://github.com/orangeboyChen/ShellCrash/raw/bin"; \
     download_asset() { \
       asset_name="$1"; \
       target_path="$2"; \
@@ -63,14 +63,14 @@ RUN set -eux; \
       done; \
       "$downloaded" && test -s "$target_path"; \
     }; \
-    download_asset "sc-bin-meta-clash-linux-${K}.tar.gz" /tmp/CrashCore.tar.gz; \
+    download_asset "meta/clash-linux-${K}.tar.gz" /tmp/CrashCore.tar.gz; \
     curl -fsSL "https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_V}/s6-overlay-${S}.tar.xz" -o /tmp/s6_arch.tar.xz; \
     curl -fsSL "https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_V}/s6-overlay-noarch.tar.xz" -o /tmp/s6_noarch.tar.xz && ls -l /tmp
 
-#安装 update 分支面板文件
+#安装 bin 分支面板文件
 RUN set -eux; \
     mkdir -p /etc/ShellCrash/ruleset /etc/ShellCrash/ui; \
-    source_base="https://github.com/orangeboyChen/ShellCrash/raw/update"; \
+    source_base="https://github.com/orangeboyChen/ShellCrash/raw/bin"; \
     download_asset() { \
       asset_name="$1"; \
       target_path="$2"; \
@@ -85,8 +85,8 @@ RUN set -eux; \
       done; \
       "$downloaded" && test -s "$target_path"; \
     }; \
-    download_asset bin/geodata/mrs.tar.gz /tmp/mrs.tar.gz; \
-    download_asset bin/dashboard/zashboard.tar.gz /tmp/zashboard.tar.gz; \
+    download_asset geodata/mrs.tar.gz /tmp/mrs.tar.gz; \
+    download_asset dashboard/zashboard.tar.gz /tmp/zashboard.tar.gz; \
     tar -zxf /tmp/mrs.tar.gz -C /etc/ShellCrash/ruleset; \
     tar -zxf /tmp/zashboard.tar.gz -C /etc/ShellCrash/ui
 	  
