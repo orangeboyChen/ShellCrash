@@ -11,7 +11,7 @@ get_bin() { #下载项目文件；脚本包来自 Release，其余资源按原�
             fi
             ;;
         bin/*)
-            bin_url="https://github.com/orangeboyChen/ShellCrash/raw/update/$2"
+            bin_url="https://github.com/orangeboyChen/ShellCrash/raw/bin/${2#bin/}"
             ;;
         public/*|rules/*|tools/*)
             bin_url="https://github.com/orangeboyChen/ShellCrash/raw/dev/$2"

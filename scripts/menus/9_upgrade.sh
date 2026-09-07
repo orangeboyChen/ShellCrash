@@ -996,7 +996,7 @@ setdb() {
             ;;
         2)
             db_type=meta_xd
-            setconfig external_ui_url "https://raw.githubusercontent.com/orangeboyChen/ShellCrash/update/bin/dashboard/meta_xd.tar.gz"
+            setconfig external_ui_url "https://raw.githubusercontent.com/orangeboyChen/ShellCrash/bin/dashboard/meta_xd.tar.gz"
             dbdir
             ;;
         3)
