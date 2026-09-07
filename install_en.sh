@@ -47,6 +47,7 @@ webget() {
         [ $? -eq 0 ] && result="200"
         [ "$7" = "single" ] && [ "$result" != "200" ] && return 1
     fi
+    return 0
 }
 error_down() {
     cecho "Please refer to \033[32mhttps://github.com/orangeboyChen/ShellCrash/blob/master/README.md"
